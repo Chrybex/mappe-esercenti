@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Esercenti Convenzionati</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: #1f2937;
+    }
+
+    header {
+      background-color: #1e3a8a;
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    header p {
+      margin-top: 10px;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      padding: 30px 20px;
+      background: white;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      text-align: center;
+    }
+
+    .stat-box h2 {
+      margin: 0;
+      font-size: 28px;
+      color: #1e3a8a;
+    }
+
+    .stat-box p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .map-container {
+      height: 75vh;
+      padding: 20px;
+    }
+
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #111827;
+      color: white;
+      font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 22px;
+      }
+
+      .map-container {
+        height: 70vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Rete Esercenti Convenzionati</h1>
+    <p>Scopri dove utilizzare i servizi convenzionati nella tua area</p>
+  </header>
+
+  <section class="stats">
+    <div class="stat-box">
+      <h2>+3000</h2>
+      <p>Esercenti Attivi</p>
+    </div>
+    <div class="stat-box">
+      <h2>+5000</h2>
+      <p>Città coperte</p>
+    </div>
+    <div class="stat-box">
+      <h2>2026</h2>
+      <p>Aggiornato</p>
+    </div>
+  </section>
+
+  <section class="map-container">
+    <iframe src="https://www.google.com/maps/d/u/0/embed?mid=13VKQcCZswCTJVDMUDLhJ1vRX4VvsOjk&ehbc=2E312F&noprof=1"></iframe>
+  </section>
+
+  <footer>
+    © 2026 - Portale Esercenti Convenzionati
+  </footer>
+
+</body>
+</html>
