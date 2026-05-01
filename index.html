@@ -12,7 +12,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f5f5f3}
 #topbar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:7px 12px;background:#1d3557;z-index:1000;flex-wrap:wrap}
 #topbar h1{font-size:14px;font-weight:700;color:#fff;white-space:nowrap}
 #upload-btn{padding:5px 10px;background:#4a7ec7;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
-#download-btn{padding:5px 10px;background:#4a7ec7;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+#download-btn{padding:5px 10px;background:#4a7ec7;border:none;border-radius:6px;font-size:12px;
 #file-input{display:none}
 #file-name{font-size:11px;color:#aac4e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
 #body-row{flex:1;display:flex;min-height:0;overflow:hidden}
@@ -99,7 +99,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f5f5f3}
     <button id="upload-btn">📂 Carica CSV</button>
     <input id="file-input" type="file" accept=".csv"/>
     <span id="file-name">Nessun file caricato</span>
-    <button id="download-btn"><a href="https://docs.google.com/spreadsheets/d/1ckb8h-b_KLf_xX595NzN5Tg_Syc1RLoyqVsTVwu2PAM/" target="_blank">
+    <button id="download-btn"><a href="https://docs.google.com/spreadsheets/d/1ckb8h-b_KLf_xX595NzN5Tg_Syc1RLoyqVsTVwu2PAM/" target="_blank" style="color: white; text-decoration: none;">
   Link al CSV</a></button>
   </div>
   <div id="body-row">
