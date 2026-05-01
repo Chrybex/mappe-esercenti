@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mappa Punti Vendita</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f5f3}
+#app{display:flex;flex-direction:column;width:100%;height:100%}
+
+/* TOPBAR */
+#topbar{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:7px 12px;background:#1d3557;z-index:1000;flex-wrap:wrap}
+#topbar h1{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;flex:1}
+#upload-btn{padding:5px 10px;background:#4a7ec7;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+#file-input{display:none}
+#file-name{font-size:11px;color:#aac4e8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+#download-btn{padding:5px 10px;background:#4a7ec7;border:none;border-radius:6px;font-size:12px;}
+#filter-toggle{display:none;padding:5px 10px;background:#4a7ec7;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap}
+
+/* BODY */
+#body-row{flex:1;display:flex;min-height:0;overflow:hidden;position:relative}
+
+/* SIDEBAR — desktop */
+#sidebar{width:220px;flex-shrink:0;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column;overflow:hidden;transition:transform .3s ease;z-index:500}
+#counters{display:flex;flex-shrink:0;border-bottom:1px solid #eee}
+.cbox{flex:1;padding:8px 6px;text-align:center;border-right:1px solid #eee}
+.cbox:last-child{border-right:none}
+.cval{font-size:20px;font-weight:700;color:#1d3557}
+.clbl{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.3px}
+#groups-box{flex-shrink:0;border-bottom:1px solid #eee;padding:7px 10px}
+#groups-label{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+#groups-chips{display:flex;flex-wrap:wrap;gap:3px;max-height:72px;overflow-y:auto}
+.gchip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap}
+.gchip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#fhead{flex-shrink:0;padding:7px 12px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0f0f0}
+#filters{flex:1;overflow-y:auto;padding:8px 10px;-webkit-overflow-scrolling:touch}
+.fg{margin-bottom:10px}
+.fl{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.msw{position:relative}
+.msb{width:100%;padding:4px 22px 4px 7px;border:1px solid #d0d0d0;border-radius:6px;font-size:11px;background:#fff;color:#222;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.msb::after{content:'▾';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:#999}
+.msd{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:3000;background:#fff;border:1px solid #d0d0d0;border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.15);max-height:160px;overflow-y:auto;display:none}
+.msd.open{display:block}
+.mso{padding:5px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:5px;user-select:none}
+.mso:hover{background:#f0f5ff}
+.mso.all{border-bottom:1px solid #f0f0f0;color:#999;font-style:italic}
+.mso input{accent-color:#4a7ec7;cursor:pointer;flex-shrink:0}
+#svc-list{display:flex;flex-direction:column;gap:3px;max-height:110px;overflow-y:auto}
+.si{display:flex;align-items:center;gap:5px;font-size:11px;color:#444;cursor:pointer}
+.si input{accent-color:#4a7ec7}
+#reset-btn{flex-shrink:0;display:block;width:100%;padding:7px;background:none;border:none;border-top:1px solid #eee;font-size:11px;color:#4a7ec7;cursor:pointer;text-align:center}
+#reset-btn:hover{background:#f0f5ff}
+
+/* MAP */
+#map-container{flex:1;position:relative;min-width:0;min-height:0;overflow:hidden}
+#map{width:100%;height:100%}
+#empty{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#bbb;pointer-events:none;z-index:5}
+#empty .ei{font-size:36px;margin-bottom:8px}
+#empty p{font-size:12px}
+
+/* SEARCH OVERLAY */
+#search-panel{position:absolute;top:10px;right:10px;z-index:1000;width:240px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);overflow:hidden}
+#sp-head{padding:8px 10px;background:#1d3557;font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.4px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+#sp-toggle{background:none;border:none;color:#fff;font-size:14px;cursor:pointer;padding:0;line-height:1}
+#sp-body{padding:8px 10px}
+#search-input{width:100%;padding:5px 8px;border:1px solid #d0d0d0;border-radius:6px;font-size:12px;outline:none;margin-bottom:5px}
+#search-input:focus{border-color:#4a7ec7}
+#ac-box{background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.1);display:none;max-height:130px;overflow-y:auto;margin-bottom:5px}
+.ac-item{padding:6px 8px;font-size:11px;cursor:pointer;border-bottom:1px solid #f0f0f0;color:#222;line-height:1.4}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:#f0f5ff}
+.ac-msg{padding:6px 8px;font-size:11px;color:#888;font-style:italic}
+#search-row{display:flex;gap:5px;margin-bottom:6px}
+#search-btn{flex:1;padding:5px 8px;background:#4a7ec7;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer}
+#search-btn:hover{background:#3a6ab5}
+#radius-sel{padding:4px 5px;border:1px solid #d0d0d0;border-radius:6px;font-size:11px;color:#222;outline:none}
+#nearby-hdr{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+#nearby-hdr span:last-child{font-weight:700;color:#4a7ec7;font-size:13px}
+#nearby-list{max-height:160px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ni{padding:5px 2px;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.ni:last-child{border-bottom:none}
+.ni:hover{background:#fafbff}
+.ni-name{font-size:11px;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ni-sub{font-size:10px;color:#999;margin-top:1px}
+.ni-dist{font-size:10px;font-weight:700;color:#4a7ec7}
+.ni-badge{display:inline-block;padding:1px 5px;border-radius:8px;font-size:9px;font-weight:600;margin-left:3px;vertical-align:middle}
+#nearby-empty{font-size:11px;color:#bbb;font-style:italic;padding:8px 0;text-align:center}
+
+/* OVERLAY backdrop mobile */
+#sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:490}
+
+/* popup */
+.leaflet-popup-content-wrapper{border-radius:9px;box-shadow:0 4px 18px rgba(0,0,0,.15)}
+.leaflet-popup-content{margin:10px 13px;font-size:12px;line-height:1.5;min-width:170px}
+.pt{font-size:13px;font-weight:700;margin-bottom:3px;color:#222}
+.pb{display:inline-block;padding:2px 6px;border-radius:12px;font-size:10px;font-weight:600;margin-bottom:5px}
+.ps{display:inline-block;padding:2px 6px;border-radius:12px;font-size:10px;font-weight:600;margin-bottom:5px;margin-left:3px}
+.pr{color:#555;font-size:11px;margin:1px 0}
+.pr b{color:#333}
+.psv{margin-top:5px;display:flex;flex-wrap:wrap;gap:3px}
+.st{background:#e8f0fc;color:#3a6ab5;border-radius:8px;padding:1px 6px;font-size:10px}
+
+/* ── MOBILE ── */
+@media(max-width:640px){
+  #filter-toggle{display:block}
+  #file-name{display:none}
+
+  /* sidebar diventa drawer dal basso */
+  #sidebar{
+    position:fixed;bottom:0;left:0;right:0;
+    width:100%;height:70vh;
+    border-right:none;border-top:1px solid #ddd;border-radius:16px 16px 0 0;
+    transform:translateY(100%);
+    z-index:500;
+  }
+  #sidebar.open{transform:translateY(0)}
+  #sidebar-backdrop.open{display:block}
+
+  /* handle visivo per il drawer */
+  #sidebar::before{
+    content:'';display:block;width:40px;height:4px;
+    background:#ddd;border-radius:2px;
+    margin:8px auto 4px;flex-shrink:0;
+  }
+
+  /* search panel più compatto e a sinistra su mobile */
+  #search-panel{
+    top:auto;bottom:16px;right:10px;left:10px;width:auto;
+  }
+  #sp-body.collapsed{display:none}
+
+  /* contatori più piccoli */
+  .cval{font-size:16px}
+  .clbl{font-size:9px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <h1>🛒 Mappa Punti Vendita</h1>
+    <button id="upload-btn">📂 Carica CSV</button>
+    <input id="file-input" type="file" accept=".csv"/>
+    <span id="file-name">Nessun file caricato</span>
+    <button id="download-btn"><a href="https://docs.google.com/spreadsheets/d/1ckb8h-b_KLf_xX595NzN5Tg_Syc1RLoyqVsTVwu2PAM/" target="_blank" style="color:white;text-decoration:none">Link al CSV</a></button>
+    <button id="filter-toggle">⚙️ Filtri</button>
+  </div>
+
+  <div id="body-row">
+    <div id="sidebar-backdrop"></div>
+    <div id="sidebar">
+      <div id="counters">
+        <div class="cbox"><div class="cval" id="cnt-vis">—</div><div class="clbl">Visibili</div></div>
+        <div class="cbox"><div class="cval" id="cnt-tot">—</div><div class="clbl">Totali</div></div>
+      </div>
+      <div id="groups-box">
+        <div id="groups-label">Gruppi visibili</div>
+        <div id="groups-chips"><span id="groups-empty" style="font-size:11px;color:#bbb;font-style:italic">Carica CSV</span></div>
+      </div>
+      <div id="fhead">Filtri</div>
+      <div id="filters">
+        <div class="fg"><div class="fl">Gruppo</div><div class="msw" id="ms-gruppo"></div></div>
+        <div class="fg"><div class="fl">Categoria</div><div class="msw" id="ms-categoria"></div></div>
+        <div class="fg"><div class="fl">Status</div><div class="msw" id="ms-status"></div></div>
+        <div class="fg"><div class="fl">Regione</div><div class="msw" id="ms-regione"></div></div>
+        <div class="fg"><div class="fl">Provincia</div><div class="msw" id="ms-provincia"></div></div>
+        <div class="fg"><div class="fl">Città</div><div class="msw" id="ms-citta"></div></div>
+        <div class="fg"><div class="fl">Servizi</div><div id="svc-list"><span style="font-size:11px;color:#bbb">Carica CSV</span></div></div>
+      </div>
+      <button id="reset-btn">↺ Azzera filtri</button>
+    </div>
+
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="empty"><div class="ei">🗺️</div><p>Carica un file CSV per<br>visualizzare i punti vendita</p></div>
+      <div id="search-panel">
+        <div id="sp-head">
+          <span>🔍 Cerca indirizzo</span>
+          <button id="sp-toggle">▾</button>
+        </div>
+        <div id="sp-body">
+          <input id="search-input" type="text" placeholder="Es. Piazza Napoli 1, Milano" autocomplete="off"/>
+          <div id="ac-box"></div>
+          <div id="search-row">
+            <button id="search-btn">Cerca</button>
+            <select id="radius-sel">
+              <option value="1">1 km</option>
+              <option value="3">3 km</option>
+              <option value="5" selected>5 km</option>
+              <option value="10">10 km</option>
+              <option value="20">20 km</option>
+            </select>
+          </div>
+          <div id="nearby-hdr"><span>Esercenti nel raggio</span><span id="nearby-count">0</span></div>
+          <div id="nearby-list"><div id="nearby-empty">Cerca un indirizzo per vedere gli esercenti vicini.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+const PROV_NOME={AG:'Agrigento',AL:'Alessandria',AN:'Ancona',AO:'Aosta',AP:'Ascoli Piceno',AQ:"L'Aquila",AR:'Arezzo',AT:'Asti',AV:'Avellino',BA:'Bari',BG:'Bergamo',BI:'Biella',BL:'Belluno',BN:'Benevento',BO:'Bologna',BR:'Brindisi',BS:'Brescia',BT:'Barletta-Andria-Trani',BZ:'Bolzano',CA:'Cagliari',CB:'Campobasso',CE:'Caserta',CH:'Chieti',CL:'Caltanissetta',CN:'Cuneo',CO:'Como',CR:'Cremona',CS:'Cosenza',CT:'Catania',CZ:'Catanzaro',EN:'Enna',FC:'Forlì-Cesena',FE:'Ferrara',FG:'Foggia',FI:'Firenze',FM:'Fermo',FR:'Frosinone',GE:'Genova',GO:'Gorizia',GR:'Grosseto',IM:'Imperia',IS:'Isernia',KR:'Crotone',LC:'Lecco',LE:'Lecce',LI:'Livorno',LO:'Lodi',LT:'Latina',LU:'Lucca',MB:'Monza e Brianza',MC:'Macerata',ME:'Messina',MI:'Milano',MN:'Mantova',MO:'Modena',MS:'Massa-Carrara',MT:'Matera',NA:'Napoli',NO:'Novara',NU:'Nuoro',OR:'Oristano',PA:'Palermo',PC:'Piacenza',PD:'Padova',PE:'Pescara',PG:'Perugia',PI:'Pisa',PN:'Pordenone',PO:'Prato',PR:'Parma',PT:'Pistoia',PU:'Pesaro e Urbino',PV:'Pavia',PZ:'Potenza',RA:'Ravenna',RC:'Reggio Calabria',RE:'Reggio Emilia',RG:'Ragusa',RI:'Rieti',RM:'Roma',RN:'Rimini',RO:'Rovigo',SA:'Salerno',SI:'Siena',SO:'Sondrio',SP:'La Spezia',SR:'Siracusa',SS:'Sassari',SU:'Sud Sardegna',SV:'Savona',TA:'Taranto',TE:'Teramo',TN:'Trento',TO:'Torino',TP:'Trapani',TR:'Terni',TS:'Trieste',TV:'Treviso',UD:'Udine',VA:'Varese',VB:'Verbano-Cusio-Ossola',VC:'Vercelli',VE:'Venezia',VI:'Vicenza',VR:'Verona',VT:'Viterbo',VV:'Vibo Valentia'};
+const PROV_REG={AG:'Sicilia',AL:'Piemonte',AN:'Marche',AO:"Valle d'Aosta",AP:'Marche',AQ:'Abruzzo',AR:'Toscana',AT:'Piemonte',AV:'Campania',BA:'Puglia',BG:'Lombardia',BI:'Piemonte',BL:'Veneto',BN:'Campania',BO:'Emilia-Romagna',BR:'Puglia',BS:'Lombardia',BT:'Puglia',BZ:'Trentino-Alto Adige',CA:'Sardegna',CB:'Molise',CE:'Campania',CH:'Abruzzo',CL:'Sicilia',CN:'Piemonte',CO:'Lombardia',CR:'Lombardia',CS:'Calabria',CT:'Sicilia',CZ:'Calabria',EN:'Sicilia',FC:'Emilia-Romagna',FE:'Emilia-Romagna',FG:'Puglia',FI:'Toscana',FM:'Marche',FR:'Lazio',GE:'Liguria',GO:'Friuli-Venezia Giulia',GR:'Toscana',IM:'Liguria',IS:'Molise',KR:'Calabria',LC:'Lombardia',LE:'Puglia',LI:'Toscana',LO:'Lombardia',LT:'Lazio',LU:'Toscana',MB:'Lombardia',MC:'Marche',ME:'Sicilia',MI:'Lombardia',MN:'Lombardia',MO:'Emilia-Romagna',MS:'Toscana',MT:'Basilicata',NA:'Campania',NO:'Piemonte',NU:'Sardegna',OR:'Sardegna',PA:'Sicilia',PC:'Emilia-Romagna',PD:'Veneto',PE:'Abruzzo',PG:'Umbria',PI:'Toscana',PN:'Friuli-Venezia Giulia',PO:'Toscana',PR:'Emilia-Romagna',PT:'Toscana',PU:'Marche',PV:'Lombardia',PZ:'Basilicata',RA:'Emilia-Romagna',RC:'Calabria',RE:'Emilia-Romagna',RG:'Sicilia',RI:'Lazio',RM:'Lazio',RN:'Emilia-Romagna',RO:'Veneto',SA:'Campania',SI:'Toscana',SO:'Lombardia',SP:'Liguria',SR:'Sicilia',SS:'Sardegna',SU:'Sardegna',SV:'Liguria',TA:'Puglia',TE:'Abruzzo',TN:'Trentino-Alto Adige',TO:'Piemonte',TP:'Sicilia',TR:'Umbria',TS:'Friuli-Venezia Giulia',TV:'Veneto',UD:'Friuli-Venezia Giulia',VA:'Lombardia',VB:'Piemonte',VC:'Piemonte',VE:'Veneto',VI:'Veneto',VR:'Veneto',VT:'Lazio',VV:'Calabria'};
+const STC={'attivo':'#2a9d8f','in arrivo':'#f4a261','potenziale':'#aaa'};
+const STL={'attivo':'Attivo','in arrivo':'In arrivo','potenziale':'Potenziale'};
+const PAL=['#e63946','#457b9d','#6a4c93','#2a9d8f','#f4a261','#e9a820','#e05c5c','#1d3557','#48cae4','#0077b6','#a8c256','#c77dff','#f77f00','#4cc9f0','#b5838d','#06d6a0','#ef476f','#ffd166'];
+const GC={};let PI=0;
+const gc=g=>{if(!GC[g])GC[g]=PAL[PI++%PAL.length];return GC[g];};
+
+function mkIcon(g){
+  const c=gc(g);
+  return L.divIcon({html:`<div style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))"><svg xmlns='http://www.w3.org/2000/svg' width='22' height='30' viewBox='0 0 28 36'><path d='M14 0C6.27 0 0 6.27 0 14c0 9.5 14 22 14 22S28 23.5 28 14C28 6.27 21.73 0 14 0z' fill='${c}'/><circle cx='14' cy='14' r='7' fill='white' opacity='0.9'/></svg></div>`,iconSize:[22,30],iconAnchor:[11,30],popupAnchor:[0,-32],className:''});
+}
+
+const map=L.map('map',{zoomControl:true}).setView([42.0,12.5],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19}).addTo(map);
+window.addEventListener('resize',()=>map.invalidateSize());
+setTimeout(()=>map.invalidateSize(),300);
+
+// cluster group — tutti i marker vengono aggiunti qui invece che alla mappa diretta
+const clusterGroup=L.markerClusterGroup({
+  chunkedLoading:true,          // caricamento asincrono, non blocca la UI
+  maxClusterRadius:60,          // raggio in px entro cui raggruppare
+  spiderfyOnMaxZoom:true,       // a zoom massimo separa i marker sovrapposti
+  showCoverageOnHover:false,
+  zoomToBoundsOnClick:true
+});
+map.addLayer(clusterGroup);
+
+let STORES=[],markers=[],searchMarker=null,radiusCircle=null,searchLL=null;
+let AF={gruppo:[],categoria:[],status:[],regione:[],provincia:[],citta:[],servizi:[]};
+
+// ── mobile drawer ────────────────────────────────────────────────────────────
+const sidebar=document.getElementById('sidebar');
+const backdrop=document.getElementById('sidebar-backdrop');
+function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('open');map.invalidateSize();}
+function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('open');}
+document.getElementById('filter-toggle').addEventListener('click',openSidebar);
+backdrop.addEventListener('click',closeSidebar);
+
+// ── search panel collapse (mobile) ───────────────────────────────────────────
+let spOpen=true;
+document.getElementById('sp-toggle').addEventListener('click',()=>{
+  spOpen=!spOpen;
+  document.getElementById('sp-body').style.display=spOpen?'block':'none';
+  document.getElementById('sp-toggle').textContent=spOpen?'▾':'▴';
+});
+
+// ── multiselect ──────────────────────────────────────────────────────────────
+const MSM={};
+function initMs(id,key,allLabel){
+  const w=document.getElementById(id);w.innerHTML='';
+  const btn=document.createElement('button');btn.className='msb';btn.type='button';btn.textContent=allLabel;
+  const drop=document.createElement('div');drop.className='msd';
+  w.appendChild(btn);w.appendChild(drop);
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    Object.values(MSM).forEach(m=>{if(m.drop!==drop)m.drop.classList.remove('open');});
+    drop.classList.toggle('open');
+  });
+  MSM[key]={btn,drop,allLabel};
+}
+
+function fillMs(key,vals){
+  const ms=MSM[key];if(!ms)return;
+  const sel=AF[key];ms.drop.innerHTML='';
+  const allO=document.createElement('div');allO.className='mso all';
+  const allC=document.createElement('input');allC.type='checkbox';allC.checked=sel.length===0;
+  allO.appendChild(allC);allO.appendChild(document.createTextNode(' '+ms.allLabel));
+  allO.addEventListener('click',e=>{e.stopPropagation();AF[key]=[];refreshFilters();applyFilters();updateNearby();});
+  ms.drop.appendChild(allO);
+  vals.forEach(v=>{
+    const o=document.createElement('div');o.className='mso';
+    const c=document.createElement('input');c.type='checkbox';c.checked=sel.includes(v);
+    o.appendChild(c);o.appendChild(document.createTextNode(' '+v));
+    o.addEventListener('click',e=>{
+      e.stopPropagation();
+      sel.includes(v)?AF[key]=sel.filter(x=>x!==v):sel.push(v);
+      if(key==='regione'){AF.provincia=[];AF.citta=[];}
+      if(key==='provincia'){AF.citta=[];}
+      refreshFilters();applyFilters();updateNearby();
+    });
+    ms.drop.appendChild(o);
+  });
+  ms.btn.textContent=sel.length===0?ms.allLabel:sel.length===1?sel[0]:`${sel.length} selezionati`;
+}
+
+function fillMsCustom(key,vals,labelFn){
+  const ms=MSM[key];if(!ms)return;
+  const sel=AF[key];ms.drop.innerHTML='';
+  const allO=document.createElement('div');allO.className='mso all';
+  const allC=document.createElement('input');allC.type='checkbox';allC.checked=sel.length===0;
+  allO.appendChild(allC);allO.appendChild(document.createTextNode(' '+ms.allLabel));
+  allO.addEventListener('click',e=>{e.stopPropagation();AF[key]=[];refreshFilters();applyFilters();updateNearby();});
+  ms.drop.appendChild(allO);
+  vals.forEach(v=>{
+    const o=document.createElement('div');o.className='mso';
+    const c=document.createElement('input');c.type='checkbox';c.checked=sel.includes(v);
+    o.appendChild(c);o.appendChild(document.createTextNode(' '+labelFn(v)));
+    o.addEventListener('click',e=>{
+      e.stopPropagation();
+      sel.includes(v)?AF[key]=sel.filter(x=>x!==v):sel.push(v);
+      AF.citta=[];
+      refreshFilters();applyFilters();updateNearby();
+    });
+    ms.drop.appendChild(o);
+  });
+  if(sel.length===0)ms.btn.textContent=ms.allLabel;
+  else if(sel.length===1)ms.btn.textContent=labelFn(sel[0]);
+  else ms.btn.textContent=`${sel.length} selezionate`;
+}
+
+document.addEventListener('click',()=>Object.values(MSM).forEach(m=>m.drop.classList.remove('open')));
+
+function refreshFilters(){
+  const rSrc=AF.regione.length?STORES.filter(s=>AF.regione.includes(PROV_REG[s.provincia]||'')):STORES;
+  const pSrc=AF.provincia.length?STORES.filter(s=>AF.provincia.includes(s.provincia)):rSrc;
+  fillMs('gruppo',[...new Set(STORES.map(s=>s.gruppo))].filter(Boolean).sort());
+  fillMs('categoria',[...new Set(STORES.map(s=>s.categoria))].filter(Boolean).sort());
+  fillMs('status',[...new Set(STORES.map(s=>s.status))].filter(Boolean).sort());
+  fillMs('regione',[...new Set(STORES.map(s=>PROV_REG[s.provincia]||''))].filter(Boolean).sort());
+  const provVals=[...new Set(rSrc.map(s=>s.provincia))].filter(Boolean).sort((a,b)=>(PROV_NOME[a]||a).localeCompare(PROV_NOME[b]||b));
+  fillMsCustom('provincia',provVals,v=>(PROV_NOME[v]?`${PROV_NOME[v]} (${v})`:v));
+  fillMs('citta',[...new Set(pSrc.map(s=>s.citta))].filter(Boolean).sort());
+}
+
+function initSvcs(){
+  const all=[...new Set(STORES.flatMap(s=>s.servizi))].filter(Boolean).sort();
+  const sl=document.getElementById('svc-list');sl.innerHTML='';
+  if(!all.length){sl.innerHTML='<span style="font-size:11px;color:#bbb">Nessun servizio</span>';return;}
+  all.forEach(sv=>{
+    const l=document.createElement('label');l.className='si';
+    const c=document.createElement('input');c.type='checkbox';c.value=sv;
+    c.addEventListener('change',()=>{c.checked?AF.servizi.push(sv):AF.servizi=AF.servizi.filter(x=>x!==sv);applyFilters();updateNearby();});
+    l.appendChild(c);l.appendChild(document.createTextNode(' '+sv));sl.appendChild(l);
+  });
+}
+
+function visible(s){
+  return(!AF.gruppo.length||AF.gruppo.includes(s.gruppo))&&
+    (!AF.categoria.length||AF.categoria.includes(s.categoria))&&
+    (!AF.status.length||AF.status.includes(s.status))&&
+    (!AF.regione.length||AF.regione.includes(PROV_REG[s.provincia]||''))&&
+    (!AF.provincia.length||AF.provincia.includes(s.provincia))&&
+    (!AF.citta.length||AF.citta.includes(s.citta))&&
+    (AF.servizi.length===0||AF.servizi.some(sv=>s.servizi.includes(sv)));
+}
+
+function updateGroupChips(vis){
+  const chips=document.getElementById('groups-chips');
+  const gruppi=[...new Set(vis.map(s=>s.gruppo))].filter(Boolean).sort();
+  if(!gruppi.length){chips.innerHTML='<span style="font-size:11px;color:#bbb;font-style:italic">Nessun gruppo visibile</span>';return;}
+  chips.innerHTML='';
+  gruppi.forEach(g=>{
+    const c=gc(g);
+    const chip=document.createElement('div');chip.className='gchip';
+    chip.style.background=c+'18';chip.style.color=c;
+    chip.innerHTML=`<span class="gchip-dot" style="background:${c}"></span>${g}`;
+    chips.appendChild(chip);
+  });
+}
+
+function applyFilters(){
+  let n=0;const vis=[];
+  clusterGroup.clearLayers();  // rimuovi tutto dal cluster
+  markers.forEach(({marker,store:s})=>{
+    const ok=visible(s);
+    if(ok){clusterGroup.addLayer(marker);n++;vis.push(s);}
+  });
+  document.getElementById('cnt-vis').textContent=n;
+  updateGroupChips(vis);
+}
+
+function mkPopup(s){
+  const c=gc(s.gruppo),sc=STC[s.status]||'#aaa',sl=STL[s.status]||s.status;
+  const pL=PROV_NOME[s.provincia]?`${PROV_NOME[s.provincia]} (${s.provincia})`:s.provincia;
+  return`<div class='pt'>${s.nome}</div><span class='pb' style='background:${c}22;color:${c}'>${s.gruppo||'—'}</span><span class='ps' style='background:${sc}22;color:${sc}'>${sl}</span><div class='pr'><b>Categoria:</b> ${s.categoria||'—'}</div><div class='pr'><b>Indirizzo:</b> ${s.indirizzo}, ${s.citta}</div><div class='pr'><b>Provincia:</b> ${pL}</div>${PROV_REG[s.provincia]?`<div class='pr'><b>Regione:</b> ${PROV_REG[s.provincia]}</div>`:''}${s.servizi.length?`<div class='psv'>${s.servizi.map(sv=>`<span class='st'>${sv}</span>`).join('')}</div>`:''}`;
+}
+
+function normSt(s){const v=(s||'').trim().toLowerCase();if(v.includes('arrivo')||v.includes('coming'))return'in arrivo';if(v.includes('potenz')||v.includes('prospect'))return'potenziale';return'attivo';}
+
+function loadCSV(text){
+  const r=Papa.parse(text,{header:true,skipEmptyLines:true,dynamicTyping:false});
+  const data=r.data.map(row=>({
+    id:row.hubspot_id||'',nome:(row.name||'').trim(),categoria:(row.establishment_category||'').trim(),
+    servizi:(row.services||'').split(',').map(s=>s.trim()).filter(Boolean),
+    provincia:(row.address_district||'').trim().toUpperCase(),citta:(row.address_city||'').trim(),
+    cap:row.address_zipcode||'',indirizzo:(row.address_line_1||'').trim(),
+    gruppo:(row.group_name||'').trim(),status:normSt(row.status),
+    lat:parseFloat(row.Latitude),lng:parseFloat(row.Longitude)
+  })).filter(r=>!isNaN(r.lat)&&!isNaN(r.lng));
+  markers.forEach(({marker})=>marker.remove());markers=[];
+  clusterGroup.clearLayers();
+  STORES=data;
+  document.getElementById('empty').style.display='none';
+  STORES.forEach(s=>{
+    const m=L.marker([s.lat,s.lng],{icon:mkIcon(s.gruppo)}).bindPopup(mkPopup(s));
+    markers.push({marker:m,store:s});
+    clusterGroup.addLayer(m);  // aggiungi al cluster, non alla mappa
+  });
+  AF={gruppo:[],categoria:[],status:[],regione:[],provincia:[],citta:[],servizi:[]};
+  refreshFilters();initSvcs();
+  document.getElementById('cnt-tot').textContent=STORES.length;
+  document.getElementById('cnt-vis').textContent=STORES.length;
+  updateGroupChips(STORES);
+  if(STORES.length){
+    const lats=STORES.map(s=>s.lat),lngs=STORES.map(s=>s.lng);
+    map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[40,40]});
+    setTimeout(()=>map.invalidateSize(),100);
+  }
+}
+
+document.getElementById('upload-btn').addEventListener('click',()=>document.getElementById('file-input').click());
+document.getElementById('file-input').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('file-name').textContent=f.name;
+  const reader=new FileReader();reader.onload=ev=>loadCSV(ev.target.result);reader.readAsText(f,'utf-8');e.target.value='';
+});
+
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  AF={gruppo:[],categoria:[],status:[],regione:[],provincia:[],citta:[],servizi:[]};
+  refreshFilters();initSvcs();applyFilters();
+  inp.value='';acBox.style.display='none';
+  if(searchMarker){searchMarker.remove();searchMarker=null;}
+  if(radiusCircle){radiusCircle.remove();radiusCircle=null;}
+  searchLL=null;
+  document.getElementById('nearby-count').textContent='0';
+  document.getElementById('nearby-list').innerHTML='<div id="nearby-empty">Cerca un indirizzo per vedere gli esercenti vicini.</div>';
+  if(STORES.length){const lats=STORES.map(s=>s.lat),lngs=STORES.map(s=>s.lng);map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[40,40]});}
+  else map.setView([42.0,12.5],6);
+  closeSidebar();
+});
+
+function hav(a,b,c,d){const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+
+function updateNearby(){
+  if(!searchLL)return;
+  const km=parseFloat(document.getElementById('radius-sel').value);
+  const {lat,lng}=searchLL;
+  const res=markers.filter(({store:s})=>visible(s)).map(({store:s})=>({s,d:hav(lat,lng,s.lat,s.lng)})).filter(x=>x.d<=km).sort((a,b)=>a.d-b.d);
+  document.getElementById('nearby-count').textContent=res.length;
+  const list=document.getElementById('nearby-list');
+  if(!res.length){list.innerHTML='<div id="nearby-empty">Nessun esercente nel raggio.</div>';return;}
+  list.innerHTML='';
+  res.forEach(({s,d})=>{
+    const c=gc(s.gruppo),sc=STC[s.status]||'#aaa',sl=STL[s.status]||s.status;
+    const ds=d<1?Math.round(d*1000)+'m':d.toFixed(1)+' km';
+    const el=document.createElement('div');el.className='ni';
+    el.innerHTML=`<div class="ni-name">${s.nome}<span class="ni-badge" style="background:${c}22;color:${c}">${s.gruppo}</span></div><div class="ni-sub">${s.citta} (${s.provincia}) · <span style="color:${sc}">${sl}</span> · <span class="ni-dist">${ds}</span></div>`;
+    el.addEventListener('click',()=>{map.setView([s.lat,s.lng],16);markers.find(m=>m.store.id===s.id)?.marker.openPopup();closeSidebar();});
+    list.appendChild(el);
+  });
+  if(radiusCircle)radiusCircle.remove();
+  radiusCircle=L.circle([lat,lng],{radius:km*1000,color:'#4a7ec7',fillColor:'#4a7ec7',fillOpacity:0.05,weight:1.5,dashArray:'5'}).addTo(map);
+}
+document.getElementById('radius-sel').addEventListener('change',updateNearby);
+
+const inp=document.getElementById('search-input'),acBox=document.getElementById('ac-box');
+let acT=null;
+function acMsg(t){acBox.innerHTML=`<div class="ac-msg">${t}</div>`;acBox.style.display='block';}
+
+async function photonSearch(q){
+  const url='https://photon.komoot.io/api/?q='+q.split(' ').map(encodeURIComponent).join('+')+'&limit=5&lang=default';
+  const res=await fetch(url,{mode:'cors'});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  return res.json();
+}
+
+function photonLabel(p){
+  const parts=[];
+  if(p.name)parts.push(p.name);
+  if(p.street){let s=p.street;if(p.housenumber)s+=' '+p.housenumber;parts.push(s);}
+  if(p.city&&p.city!==p.name)parts.push(p.city);
+  else if(p.town&&p.town!==p.name)parts.push(p.town);
+  else if(p.village&&p.village!==p.name)parts.push(p.village);
+  return parts.filter(Boolean).join(', ')||p.name||'';
+}
+
+async function doSearch(q,jump=false){
+  if(!q||q.length<3)return;
+  if(!jump)acMsg('Ricerca in corso…');
+  try{
+    const data=await photonSearch(q);
+    const feats=(data.features||[]).filter(f=>f.properties.country==='Italy'||f.properties.countrycode==='IT');
+    if(!feats.length){acMsg('Nessun risultato trovato');return;}
+    if(jump){const f=feats[0];goTo({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],label:photonLabel(f.properties)});acBox.style.display='none';return;}
+    acBox.innerHTML='';
+    feats.forEach(f=>{
+      const lbl=photonLabel(f.properties);
+      const el=document.createElement('div');el.className='ac-item';el.textContent=lbl;
+      el.addEventListener('click',()=>{inp.value=lbl;acBox.style.display='none';goTo({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],label:lbl});});
+      acBox.appendChild(el);
+    });
+    acBox.style.display='block';
+  }catch(e){acMsg('Errore: '+e.message);}
+}
+
+function goTo({lat,lng,label}){
+  searchLL={lat,lng};map.setView([lat,lng],16);
+  if(searchMarker)searchMarker.remove();
+  searchMarker=L.marker([lat,lng],{icon:L.divIcon({html:'<div style="width:13px;height:13px;background:#4a7ec7;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconSize:[13,13],iconAnchor:[6,6],className:''})}).addTo(map).bindPopup(`📍 ${label}`).openPopup();
+  updateNearby();
+}
+
+inp.addEventListener('input',()=>{clearTimeout(acT);const q=inp.value.trim();if(q.length<3){acBox.style.display='none';return;}acT=setTimeout(()=>doSearch(q),1000);});
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(acT);doSearch(inp.value.trim(),true);}});
+document.getElementById('search-btn').addEventListener('click',()=>{clearTimeout(acT);doSearch(inp.value.trim(),true);});
+document.addEventListener('click',e=>{if(!acBox.contains(e.target)&&e.target!==inp)acBox.style.display='none';});
+
+const MS_LABELS={gruppo:'Tutti',categoria:'Tutte',status:'Tutti',regione:'Tutte',provincia:'Tutte',citta:'Tutte'};
+Object.entries(MS_LABELS).forEach(([key,lbl])=>initMs('ms-'+key,key,lbl));
+</script>
+</body>
+</html>
