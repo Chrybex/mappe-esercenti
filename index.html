@@ -483,7 +483,7 @@ async function handleTokenResponse(resp){
     }
     accessToken=resp.access_token;
     setLoggedIn(user.email);
-    document.getElementById('file-name').textContent='\u23f3 Caricamento dati...';
+    document.getElementById('file-name').textContent='\u23f3 Caricamento dati in corso...';
     document.getElementById('file-name').style.color='#aac4e8';
     const csv=await loadSheetCSV(accessToken);
     loadCSV(csv);
