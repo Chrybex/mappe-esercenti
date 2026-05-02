@@ -175,11 +175,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#f5f5f3}
         <div class="fg"><div class="fl">Città</div><div class="msw" id="ms-citta"></div></div>
         <div class="fg">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
-            <div class="fl" style="margin-bottom:0">Servizi</div>
+            <div class="fl" style="margin-bottom:0;">Servizi</div>
             <div id="svc-logic-wrap" style="display:none;align-items:center;gap:4px;font-size:10px;color:#999">
-              <span>Se 2 o più, includi:</span>
-              <button id="svc-or" onclick="setSvcLogic('OR')" style="padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid #4a7ec7;background:#4a7ec7;color:#fff">Almeno uno</button>
-              <button id="svc-and" onclick="setSvcLogic('AND')" style="padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid #ccc;background:#fff;color:#999">Tutti</button>
+              <span style="padding:5px;font-weight:900;">Mostra sulla mappa:</span>
+              <button id="svc-or" onclick="setSvcLogic('OR')" style="padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid #4a7ec7;background:#4a7ec7;color:#fff">PDV con almeno uno dei servizi selezionati</button>
+              <button id="svc-and" onclick="setSvcLogic('AND')" style="padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid #ccc;background:#fff;color:#999">PDV con tutti i servizi selezionati</button>
             </div>
           </div>
           <div id="svc-list"><span style="font-size:11px;color:#bbb">Carica CSV</span></div>
